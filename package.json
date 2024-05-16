@@ -22,8 +22,10 @@
   "scripts": {
     "scripts": {
     "build": "react-scripts build",
+    "vercel-build": "npm run build && npm run server:prod",
     "start": "react-scripts start",
     "server:prod": "node server.js"
+  }
   }
   },
   "eslintConfig": {
