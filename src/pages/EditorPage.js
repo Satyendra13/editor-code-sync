@@ -22,11 +22,11 @@ const EditorPage = () => {
 	useEffect(() => {
 		const init = async () => {
 			socketRef.current = await initSocket();
-			socketRef.current.on("connect_error", (err) => handleErrors(err));
-			socketRef.current.on("connect_failed", (err) => handleErrors(err));
+			socketRef.current.on("connect_error", handleErrors);
+			socketRef.current.on("connect_failed", handleErrors);
 
-			function handleErrors(e) {
-				console.log("socket error", e);
+			function handleErrors(err) {
+				console.log("socket error", err);
 				toast.error("Socket connection failed, try again later.");
 				reactNavigator("/");
 			}
@@ -37,36 +37,40 @@ const EditorPage = () => {
 			});
 
 			// Listening for joined event
-			socketRef.current.on(
-				ACTIONS.JOINED,
-				({ clients, username, socketId }) => {
-					if (username !== location.state?.username) {
-						toast.success(`${username} joined the room.`);
-						console.log(`${username} joined`);
-					}
-					setClients(clients);
-					socketRef.current.emit(ACTIONS.SYNC_CODE, {
-						code: codeRef.current,
-						socketId,
-					});
+			const handleJoined = ({ clients, username, socketId }) => {
+				if (username !== location.state?.username) {
+					toast.success(`${username} joined the room.`);
+					console.log(`${username} joined`);
 				}
-			);
+				setClients(clients);
+				socketRef.current.emit(ACTIONS.SYNC_CODE, {
+					code: codeRef.current,
+					socketId,
+				});
+			};
+			socketRef.current.on(ACTIONS.JOINED, handleJoined);
 
 			// Listening for disconnected
-			socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
+			const handleDisconnected = ({ socketId, username }) => {
 				toast.success(`${username} left the room.`);
-				setClients((prev) => {
-					return prev.filter((client) => client.socketId !== socketId);
-				});
-			});
+				setClients((prevClients) =>
+					prevClients.filter((client) => client.socketId !== socketId)
+				);
+			};
+			socketRef.current.on(ACTIONS.DISCONNECTED, handleDisconnected);
+
+			// Cleanup function
+			return () => {
+				socketRef.current.disconnect();
+				socketRef.current.off("connect_error", handleErrors);
+				socketRef.current.off("connect_failed", handleErrors);
+				socketRef.current.off(ACTIONS.JOINED, handleJoined);
+				socketRef.current.off(ACTIONS.DISCONNECTED, handleDisconnected);
+			};
 		};
+
 		init();
-		return () => {
-			socketRef.current.disconnect();
-			socketRef.current.off(ACTIONS.JOINED);
-			socketRef.current.off(ACTIONS.DISCONNECTED);
-		};
-	}, []);
+	}, [roomId, location.state?.username]);
 
 	async function copyRoomId() {
 		try {
