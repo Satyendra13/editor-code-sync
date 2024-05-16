@@ -6,7 +6,19 @@ const { Server } = require("socket.io");
 const ACTIONS = require("./src/Actions");
 
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server, {
+	cors: {
+		origin: "https://editor-codesync.netlify.app",
+		methods: ["GET", "POST"],
+	},
+});
+
+io.on("connection", (socket) => {
+	console.log("New client connected");
+	socket.on("disconnect", () => {
+		console.log("Client disconnected");
+	});
+});
 
 app.use(express.static("build"));
 app.use((req, res, next) => {
