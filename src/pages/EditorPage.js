@@ -13,7 +13,7 @@ import {
 
 const EditorPage = () => {
 	const socketRef = useRef(null);
-	const codeRef = useRef("");
+	const codeRef = useRef(null);
 	const location = useLocation();
 	const { roomId } = useParams();
 	const reactNavigator = useNavigate();
@@ -52,11 +52,6 @@ const EditorPage = () => {
 				}
 			);
 
-			// Listening for code changes
-			socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
-				codeRef.current = code;
-			});
-
 			// Listening for disconnected
 			socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
 				toast.success(`${username} left the room.`);
@@ -70,9 +65,8 @@ const EditorPage = () => {
 			socketRef.current.disconnect();
 			socketRef.current.off(ACTIONS.JOINED);
 			socketRef.current.off(ACTIONS.DISCONNECTED);
-			socketRef.current.off(ACTIONS.CODE_CHANGE);
 		};
-	}, [reactNavigator, roomId, location.state?.username]);
+	}, []);
 
 	async function copyRoomId() {
 		try {
@@ -119,10 +113,6 @@ const EditorPage = () => {
 					roomId={roomId}
 					onCodeChange={(code) => {
 						codeRef.current = code;
-						socketRef.current.emit(ACTIONS.CODE_CHANGE, {
-							roomId,
-							code,
-						});
 					}}
 				/>
 			</div>
