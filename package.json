@@ -20,8 +20,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "build": "react-scripts build && npm run server:prod",
-    "start": "react-scripts start && npm run server:prod",
+    "build": "react-scripts build",
+    "vercel-build": "npm run build && npm run server:prod",
+    "start": "react-scripts start",
     "server:prod": "node server.js"
   },
   "eslintConfig": {
